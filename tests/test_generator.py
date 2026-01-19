@@ -1,8 +1,8 @@
 import os
 
-from autoskill.parser import parse_llms_text
-from autoskill.generator import generate_skill
-from autoskill.models import GeneratorOptions
+from skillgen.parser import parse_llms_text
+from skillgen.generator import generate_skill
+from skillgen.models import GeneratorOptions
 
 
 def test_generate_skill_no_snapshot(tmp_path):
@@ -33,7 +33,7 @@ def test_generate_skill_no_snapshot(tmp_path):
         llm_max_new_tokens=128,
         llm_temperature=0.2,
         llm_fallback=True,
-        user_agent="AutoSkill/0.1",
+        user_agent="SkillGen/0.1",
         target="generic",
         target_dir=None,
         scope="project",

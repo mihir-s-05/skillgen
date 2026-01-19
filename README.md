@@ -1,12 +1,14 @@
-# AutoSkill
+# SkillGen
 Turn any `llms.txt` into a ready-to-use Agent Skill.
 
-AutoSkill reads the curated links in `llms.txt`, optionally snapshots the content into `references/`, and generates a clean `SKILL.md` plus indexes and provenance metadata. It can also install the skill into common tool locations (Codex, Claude Code, OpenCode, Amp, Roo, Cursor).
+SkillGen reads the curated links in `llms.txt`, optionally snapshots the content into `references/`, and generates a clean `SKILL.md` plus indexes and provenance metadata. It can also install the skill into common tool locations (Codex, Claude Code, OpenCode, Amp, Roo, Cursor).
 
 ## Quick start
 ```bash
+pip install skillgen
+# or for local development
 pip install -e .
-autoskill https://docs.example.com/llms.txt --out ./skills
+skillgen https://docs.example.com/llms.txt --out ./skills
 ```
 
 ## What you get
@@ -16,13 +18,12 @@ autoskill https://docs.example.com/llms.txt --out ./skills
 - `manifest.json` for auditability
 
 ## LLM keyword generation
-By default AutoSkill uses a local Transformers model to generate the description and keywords. If the model is not available, it falls back to deterministic heuristics (unless you pass `--no-llm-fallback`).
+By default SkillGen uses a local Transformers model to generate the description and keywords. If the model is not available, it falls back to deterministic heuristics (unless you pass `--no-llm-fallback`).
 
 Recommended model: `Qwen/Qwen3-0.6B`.
 
 ```bash
-pip install -e .[llm]
-autoskill https://docs.example.com/llms.txt --llm-model Qwen/Qwen3-0.6B
+skillgen https://docs.example.com/llms.txt --llm-model Qwen/Qwen3-0.6B
 ```
 
 ## Common flags

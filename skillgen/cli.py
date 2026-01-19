@@ -40,7 +40,7 @@ def main() -> None:
     parser.add_argument("--llm-temperature", type=float, help="LLM temperature")
     parser.add_argument("--no-llm-fallback", action="store_true", help="Fail if LLM is unavailable")
     parser.add_argument("--user-agent", help="Custom User-Agent")
-    parser.add_argument("--config", help="Path to autoskill.yaml")
+    parser.add_argument("--config", help="Path to skillgen.yaml")
     parser.add_argument("--target", choices=["generic", "codex", "claude", "opencode", "amp", "roo", "cursor"], help="Install target")
     parser.add_argument("--scope", choices=["project", "user"], help="Target scope")
     parser.add_argument("--target-dir", help="Override target directory")

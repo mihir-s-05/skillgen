@@ -23,7 +23,7 @@ def default_config() -> Dict[str, Any]:
         "llm_fallback": True,
         "fetch_mode": "full",
         "by_section": True,
-        "user_agent": "AutoSkill/0.1",
+        "user_agent": "SkillGen/0.1",
         "target": "generic",
         "scope": "user",
         "overwrite": False,
@@ -33,7 +33,7 @@ def default_config() -> Dict[str, Any]:
 
 def load_config(path: Optional[str]) -> Dict[str, Any]:
     if not path:
-        path = "autoskill.yaml"
+        path = "skillgen.yaml"
         if not os.path.exists(path):
             return default_config()
     if not os.path.exists(path):

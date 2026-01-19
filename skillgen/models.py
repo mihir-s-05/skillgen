@@ -71,7 +71,7 @@ class GeneratorOptions:
     llm_max_new_tokens: int = 512
     llm_temperature: float = 0.2
     llm_fallback: bool = True
-    user_agent: str = "AutoSkill/0.1"
+    user_agent: str = "SkillGen/0.1"
     domain_allowlist: Optional[List[str]] = None
     target: str = "generic"
     target_dir: Optional[str] = None

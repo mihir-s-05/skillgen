@@ -1,4 +1,4 @@
-from autoskill.parser import parse_llms_text
+from skillgen.parser import parse_llms_text
 
 
 def test_parse_llms_text():
