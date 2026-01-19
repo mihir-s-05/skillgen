@@ -17,6 +17,11 @@ classifiers = [
   "Operating System :: OS Independent"
 ]
 
+[project.urls]
+Homepage = "https://github.com/mihir-s-05/skillgen"
+Repository = "https://github.com/mihir-s-05/skillgen"
+Issues = "https://github.com/mihir-s-05/skillgen/issues"
+
 dependencies = [
   "requests>=2.31.0",
   "PyYAML>=6.0",
@@ -37,3 +42,7 @@ test = ["pytest>=7.4"]
 
 [project.scripts]
 skillgen = "skillgen.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["skillgen*"]
