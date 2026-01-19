@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "autoskill"
+version = "0.1.0"
+description = "Generate Agent Skills from llms.txt"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [{name = "AutoSkill"}]
+keywords = ["llms.txt", "agent", "skills", "documentation", "generator"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent"
+]
+
+dependencies = [
+  "requests>=2.31.0",
+  "PyYAML>=6.0",
+  "trafilatura>=1.8.0",
+  "beautifulsoup4>=4.12.0"
+]
+
+[project.optional-dependencies]
+# Optional fallback converter
+extras = ["markdownify>=0.11.6"]
+
+llm = ["transformers>=4.44.0", "torch>=2.1.0"]
+
+test = ["pytest>=7.4"]
+
+[project.scripts]
+autoskill = "autoskill.cli:main"

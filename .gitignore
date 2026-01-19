@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+
+# Virtual envs
+.venv/
+venv/
+ENV/
+
+# Build artifacts
+dist/
+build/
+
+# Test caches
+.pytest_cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Local outputs
+_outputs/
+
+SPEC*.md

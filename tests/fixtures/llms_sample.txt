@@ -1,0 +1,11 @@
+# Sample Docs
+> A short summary.
+
+Intro paragraph.
+
+## Guides
+- [Getting Started](https://example.com/start)
+- [API Reference](https://example.com/api): endpoint details
+
+## Optional
+- [Changelog](https://example.com/changelog)
