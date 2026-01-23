@@ -16,20 +16,20 @@ classifiers = [
   "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent"
 ]
-
-[project.urls]
-Homepage = "https://github.com/mihir-s-05/skillgen"
-Repository = "https://github.com/mihir-s-05/skillgen"
-Issues = "https://github.com/mihir-s-05/skillgen/issues"
-
 dependencies = [
   "requests>=2.31.0",
   "PyYAML>=6.0",
   "trafilatura>=1.8.0",
   "beautifulsoup4>=4.12.0",
   "transformers>=4.44.0",
-  "torch>=2.1.0"
+  "torch>=2.1.0",
+  "mcp>=1.0.0"
 ]
+
+[project.urls]
+Homepage = "https://github.com/mihir-s-05/skillgen"
+Repository = "https://github.com/mihir-s-05/skillgen"
+Issues = "https://github.com/mihir-s-05/skillgen/issues"
 
 [project.optional-dependencies]
 # Optional fallback converter
@@ -42,6 +42,7 @@ test = ["pytest>=7.4"]
 
 [project.scripts]
 skillgen = "skillgen.cli:main"
+skillgen-mcp = "skillgen.mcp_server:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

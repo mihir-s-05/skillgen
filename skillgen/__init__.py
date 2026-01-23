@@ -1,1 +1,1 @@
-__all__ = ["cli"]
+__all__ = ["cli", "mcp_server"]

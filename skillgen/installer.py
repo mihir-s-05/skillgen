@@ -86,9 +86,9 @@ def install_skill(
     if target == "generic":
         return output_root
 
-    scope = "user"
-    if target == "cursor":
-        scope = "project"
+    scope = (scope or "project").strip().lower()
+    if target == "cursor" and scope != "project":
+        raise RuntimeError("cursor install requires project scope")
 
     resolved_dir = target_dir or resolve_target_dir(target, scope, cwd, roo_mode)
 
@@ -114,9 +114,7 @@ def install_skill(
     dest = os.path.join(resolved_dir, skill_name)
     if os.path.exists(dest):
         if not overwrite:
-            manifest_path = os.path.join(dest, "manifest.json")
-            if not os.path.exists(manifest_path):
-                raise RuntimeError(f"target directory exists: {dest}")
+            raise RuntimeError(f"target directory exists: {dest}")
         shutil.rmtree(dest)
     os.makedirs(resolved_dir, exist_ok=True)
     shutil.copytree(output_root, dest)
