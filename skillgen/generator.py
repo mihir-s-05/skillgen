@@ -158,122 +158,52 @@ def generate_skill(
         section_map.setdefault(section.title, [])
 
     if options.snapshot and fetch_result:
-        if options.by_section:
-            for section in parsed.sections:
-                if section.optional and not options.include_optional:
-                    continue
-                section_title = section.title
-                section_slug = slugify(section_title, max_len=60)
-                combined_parts = []
-                source_meta_list = []
-                source_urls = []
-                for link in section.links:
-                    if link.optional and not options.include_optional:
-                        continue
-                    normalized = normalize_url(link.url, parsed.source_url or "")
-                    doc = fetch_result.docs.get(normalized)
-                    if not doc or not doc.ok or not doc.text:
-                        continue
-                    md = convert_to_markdown(doc.text, doc.content_type, doc.final_url)
-                    header = f"## {link.title}\n"
-                    if link.note:
-                        header += f"\n> Note: {link.note}\n"
-                    header += f"\nSource: {doc.final_url}\n\n"
-                    combined_parts.append(header + md)
-                    source_meta_list.append({
-                        "source_url": doc.source_url,
-                        "final_url": doc.final_url,
-                        "content_type": doc.content_type,
-                        "status": doc.status_code,
-                        "bytes": doc.bytes,
-                        "etag": doc.etag,
-                        "last_modified": doc.last_modified,
-                    })
-                    source_urls.append(doc.final_url)
+        for link in all_links:
+            section_title = link.section_title or "General"
+            section_slug = slugify(section_title, max_len=60)
+            normalized = normalize_url(link.url, parsed.source_url or "")
+            doc = fetch_result.docs.get(normalized)
+            if not doc or not doc.ok or not doc.text:
+                continue
+            md = convert_to_markdown(doc.text, doc.content_type, doc.final_url)
+            parts = _split_markdown(md, options.max_page_chars)
 
-                if not combined_parts:
-                    continue
-                combined_md = "\n\n---\n\n".join(combined_parts)
-                parts = _split_markdown(combined_md, options.max_page_chars)
+            base_slug = safe_filename(link.title or urlparse(normalized).path.strip("/") or "page")
+            for idx, part in enumerate(parts):
+                if len(parts) > 1:
+                    filename = f"{base_slug}.part-{idx+1:03d}.md"
+                else:
+                    filename = f"{base_slug}.md"
+                local_path = os.path.join("references", "sections", section_slug, "pages", filename)
+                write_text(os.path.join(output_root, local_path), part)
 
-                for idx, part in enumerate(parts):
-                    if len(parts) > 1:
-                        filename = f"{section_slug}.part-{idx+1:03d}.md"
-                    else:
-                        filename = f"{section_slug}.md"
-                    local_path = os.path.join("references", "sections", section_slug, "pages", filename)
-                    write_text(os.path.join(output_root, local_path), part)
+                headings = _extract_headings(part)
+                headings_pool.extend(headings)
 
-                    headings = _extract_headings(part)
-                    headings_pool.extend(headings)
+                entry = {
+                    "id": f"{section_slug}-{base_slug}-{idx+1}",
+                    "title": link.title,
+                    "section": section_title,
+                    "source_url": doc.final_url,
+                    "local_path": local_path.replace("\\", "/"),
+                    "headings": headings,
+                    "keywords": [],
+                    "updated_at": time.strftime("%Y-%m-%d"),
+                }
+                catalog.append(entry)
+                section_map[section_title].append(entry)
 
-                    entry = {
-                        "id": f"{section_slug}-part-{idx+1}",
-                        "title": section_title,
-                        "section": section_title,
-                        "source_url": source_urls[0] if source_urls else parsed.source_url,
-                        "source_urls": source_urls,
-                        "local_path": local_path.replace("\\", "/"),
-                        "headings": headings,
-                        "keywords": [],
-                        "updated_at": time.strftime("%Y-%m-%d"),
-                    }
-                    catalog.append(entry)
-                    section_map[section_title].append(entry)
-
-                    source_meta = {
-                        "section": section_title,
-                        "sources": source_meta_list,
-                        "sha256": sha256_text(part),
-                    }
-                    write_json(os.path.join(output_root, local_path + ".source.json"), source_meta)
-        else:
-            for link in all_links:
-                section_title = link.section_title or "General"
-                section_slug = slugify(section_title, max_len=60)
-                normalized = normalize_url(link.url, parsed.source_url or "")
-                doc = fetch_result.docs.get(normalized)
-                if not doc or not doc.ok or not doc.text:
-                    continue
-                md = convert_to_markdown(doc.text, doc.content_type, doc.final_url)
-                parts = _split_markdown(md, options.max_page_chars)
-
-                base_slug = safe_filename(link.title or urlparse(normalized).path.strip("/") or "page")
-                for idx, part in enumerate(parts):
-                    if len(parts) > 1:
-                        filename = f"{base_slug}.part-{idx+1:03d}.md"
-                    else:
-                        filename = f"{base_slug}.md"
-                    local_path = os.path.join("references", "sections", section_slug, "pages", filename)
-                    write_text(os.path.join(output_root, local_path), part)
-
-                    headings = _extract_headings(part)
-                    headings_pool.extend(headings)
-
-                    entry = {
-                        "id": f"{section_slug}-{base_slug}-{idx+1}",
-                        "title": link.title,
-                        "section": section_title,
-                        "source_url": doc.final_url,
-                        "local_path": local_path.replace("\\", "/"),
-                        "headings": headings,
-                        "keywords": [],
-                        "updated_at": time.strftime("%Y-%m-%d"),
-                    }
-                    catalog.append(entry)
-                    section_map[section_title].append(entry)
-
-                    source_meta = {
-                        "source_url": doc.source_url,
-                        "final_url": doc.final_url,
-                        "content_type": doc.content_type,
-                        "status": doc.status_code,
-                        "bytes": doc.bytes,
-                        "etag": doc.etag,
-                        "last_modified": doc.last_modified,
-                        "sha256": sha256_text(part),
-                    }
-                    write_json(os.path.join(output_root, local_path + ".source.json"), source_meta)
+                source_meta = {
+                    "source_url": doc.source_url,
+                    "final_url": doc.final_url,
+                    "content_type": doc.content_type,
+                    "status": doc.status_code,
+                    "bytes": doc.bytes,
+                    "etag": doc.etag,
+                    "last_modified": doc.last_modified,
+                    "sha256": sha256_text(part),
+                }
+                write_json(os.path.join(output_root, local_path + ".source.json"), source_meta)
     else:
         for link in all_links:
             section_title = link.section_title or "General"
@@ -299,13 +229,7 @@ def generate_skill(
         parsed.summary,
         section_titles,
         headings_pool,
-        options.keyword_mode,
-        options.llm_provider,
-        options.llm_model,
-        options.llm_device,
-        options.llm_max_new_tokens,
-        options.llm_temperature,
-        options.llm_fallback,
+        options.heuristic_level,
     )
 
     skill_md = _render_skill_md(name, description, keywords)
@@ -336,6 +260,7 @@ def generate_skill(
         "source_url": parsed.source_url,
         "generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
         "sections": [s.title for s in parsed.sections],
+        "heuristic_level": options.heuristic_level,
         "warnings": fetch_result.warnings if fetch_result else [],
         "link_count": len(all_links),
         "catalog_count": len(catalog),

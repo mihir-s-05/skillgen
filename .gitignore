@@ -28,5 +28,10 @@ Thumbs.db
 
 # Local outputs
 _outputs/
+skillgen.yaml
+
+# Local skill install folders (if HOME/CODEX_HOME points to repo)
+.agents/
+.claude/
 
 SPEC*.md

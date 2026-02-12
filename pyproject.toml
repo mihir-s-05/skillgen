@@ -21,8 +21,6 @@ dependencies = [
   "PyYAML>=6.0",
   "trafilatura>=1.8.0",
   "beautifulsoup4>=4.12.0",
-  "transformers>=4.44.0",
-  "torch>=2.1.0",
   "mcp>=1.0.0"
 ]
 
@@ -34,9 +32,6 @@ Issues = "https://github.com/mihir-s-05/skillgen/issues"
 [project.optional-dependencies]
 # Optional fallback converter
 extras = ["markdownify>=0.11.6"]
-
-# Backward-compatible extra (now included by default)
-llm = ["transformers>=4.44.0", "torch>=2.1.0"]
 
 test = ["pytest>=7.4"]
 

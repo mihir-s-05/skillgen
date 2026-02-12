@@ -58,24 +58,12 @@ class GeneratorOptions:
     include_optional: bool
     snapshot: bool
     allow_external: bool
-    fetch_mode: str
     max_bytes_per_doc: int
     max_total_bytes: int
     max_pages: int
     max_page_chars: int
-    by_section: bool
-    keyword_mode: str
-    llm_provider: str
-    llm_model: Optional[str]
-    llm_device: str = "cpu"
-    llm_max_new_tokens: int = 512
-    llm_temperature: float = 0.2
-    llm_fallback: bool = True
+    heuristic_level: str = "balanced"
     user_agent: str = "SkillGen/0.1"
     domain_allowlist: Optional[List[str]] = None
-    target: str = "generic"
-    target_dir: Optional[str] = None
-    scope: str = "project"
-    overwrite: bool = False
-    roo_mode: Optional[str] = None
+    install_for_claude: bool = False
     config_path: Optional[str] = None

@@ -48,19 +48,24 @@ def markdown_candidates(url: str) -> List[str]:
     return ordered
 
 
-def _fetch_stream(session: requests.Session, url: str, max_bytes: int, user_agent: str) -> Tuple[Optional[str], Optional[str], Optional[str], Optional[str], int, Optional[str]]:
+def _fetch_stream(
+    session: requests.Session,
+    url: str,
+    max_bytes: int,
+    user_agent: str,
+) -> Tuple[Optional[str], Optional[str], Optional[str], Optional[str], int, Optional[str], int, bool]:
     headers = {"User-Agent": user_agent}
     try:
         r = session.get(url, headers=headers, timeout=20, stream=True, allow_redirects=True)
     except Exception as exc:
-        return None, None, None, None, 0, f"request failed: {exc}"
+        return None, None, None, None, 0, f"request failed: {exc}", 0, False
     if len(r.history) > 5:
-        return None, None, None, None, r.status_code, "too many redirects"
+        return None, None, None, None, r.status_code, "too many redirects", 0, False
     content_type = r.headers.get("Content-Type")
     etag = r.headers.get("ETag")
     last_modified = r.headers.get("Last-Modified")
     if r.status_code >= 400:
-        return None, content_type, None, last_modified, r.status_code, f"http {r.status_code}"
+        return None, content_type, None, last_modified, r.status_code, f"http {r.status_code}", 0, False
     chunks = []
     total = 0
     truncated = False
@@ -82,7 +87,7 @@ def _fetch_stream(session: requests.Session, url: str, max_bytes: int, user_agen
         text = data.decode("utf-8", errors="ignore")
     if truncated:
         text += "\n\n[TRUNCATED]\n"
-    return text, content_type, etag, last_modified, r.status_code, None
+    return text, content_type, etag, last_modified, r.status_code, None, len(data), truncated
 
 
 def fetch_documents(
@@ -108,6 +113,9 @@ def fetch_documents(
             continue
         if count >= max_pages:
             warnings.append("max_pages limit reached")
+            break
+        if total_bytes >= max_total_bytes:
+            warnings.append("max_total_bytes limit reached")
             break
         normalized = normalize_url(link.url, base_url)
         parsed = urlparse(normalized)
@@ -140,19 +148,20 @@ def fetch_documents(
 
         final_doc = None
         for candidate in markdown_candidates(normalized):
-            if total_bytes >= max_total_bytes:
+            remaining_bytes = max_total_bytes - total_bytes
+            if remaining_bytes <= 0:
                 warnings.append("max_total_bytes limit reached")
                 break
-            text, content_type, etag, last_modified, status, err = _fetch_stream(
+            request_cap = min(max_bytes_per_doc, remaining_bytes)
+            text, content_type, etag, last_modified, status, err, fetched_bytes, _ = _fetch_stream(
                 session,
                 candidate,
-                max_bytes_per_doc,
+                request_cap,
                 user_agent,
             )
             if err:
                 continue
-            bytes_len = len(text.encode("utf-8", errors="ignore")) if text else 0
-            total_bytes += bytes_len
+            total_bytes += fetched_bytes
             final_doc = FetchedDoc(
                 source_url=normalized,
                 final_url=candidate,
@@ -160,7 +169,7 @@ def fetch_documents(
                 status_code=status,
                 ok=True,
                 error=None,
-                bytes=bytes_len,
+                bytes=fetched_bytes,
                 text=text,
                 etag=etag,
                 last_modified=last_modified,
@@ -186,7 +195,7 @@ def fetch_documents(
 
 def fetch_text(url: str, user_agent: str) -> str:
     session = requests.Session()
-    text, _, _, _, status, err = _fetch_stream(session, url, 5_000_000, user_agent)
+    text, _, _, _, status, err, _, _ = _fetch_stream(session, url, 5_000_000, user_agent)
     if err or status >= 400 or text is None:
         raise RuntimeError(f"failed to fetch {url}: {err or status}")
     return text

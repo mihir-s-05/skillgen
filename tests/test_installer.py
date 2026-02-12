@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from skillgen.installer import install_skill
+from skillgen.installer import install_skill, resolve_install_dir
 
 
 def _make_output_root(tmp_path: Path) -> Path:
@@ -12,134 +12,49 @@ def _make_output_root(tmp_path: Path) -> Path:
     return out
 
 
-def test_install_skill_codex_project_scope_installs_under_project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    project = tmp_path / "project"
-    project.mkdir()
+def test_resolve_install_dir_defaults_to_agents(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setattr("skillgen.installer.os.path.expanduser", lambda _: str(tmp_path))
+    assert resolve_install_dir(for_claude=False) == str(tmp_path / ".agents" / "skills")
+    assert resolve_install_dir(for_claude=True) == str(tmp_path / ".claude" / "skills")
+
+
+def test_install_skill_writes_to_agents_by_default(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setattr("skillgen.installer.os.path.expanduser", lambda _: str(tmp_path))
     output_root = _make_output_root(tmp_path / "gen")
 
-    install_path = install_skill(
-        str(output_root),
-        "myskill",
-        target="codex",
-        scope="project",
-        target_dir=None,
-        overwrite=True,
-        roo_mode=None,
-        cwd=str(project),
-    )
-
-    expected = project / ".codex" / "skills" / "myskill"
-    assert Path(install_path) == expected
-    assert (expected / "SKILL.md").exists()
+    install_path = Path(install_skill(str(output_root), "myskill"))
+    assert install_path == tmp_path / ".agents" / "skills" / "myskill"
+    assert (install_path / "SKILL.md").exists()
 
 
-def test_install_skill_codex_user_scope_uses_CODEX_HOME(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    codex_home = tmp_path / "codex-home"
-    monkeypatch.setenv("CODEX_HOME", str(codex_home))
-
-    project = tmp_path / "project"
-    project.mkdir()
+def test_install_skill_writes_to_claude_when_requested(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setattr("skillgen.installer.os.path.expanduser", lambda _: str(tmp_path))
     output_root = _make_output_root(tmp_path / "gen")
 
-    install_path = install_skill(
-        str(output_root),
-        "myskill",
-        target="codex",
-        scope="user",
-        target_dir=None,
-        overwrite=True,
-        roo_mode=None,
-        cwd=str(project),
-    )
-
-    expected = codex_home / "skills" / "myskill"
-    assert Path(install_path) == expected
-    assert (expected / "SKILL.md").exists()
+    install_path = Path(install_skill(str(output_root), "myskill", for_claude=True))
+    assert install_path == tmp_path / ".claude" / "skills" / "myskill"
+    assert (install_path / "SKILL.md").exists()
 
 
-def test_install_skill_refuses_to_overwrite_when_overwrite_false(tmp_path: Path) -> None:
+def test_install_skill_overwrites_existing_destination(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setattr("skillgen.installer.os.path.expanduser", lambda _: str(tmp_path))
     output_root = _make_output_root(tmp_path / "gen")
-    target_dir = tmp_path / "install-root"
-    target_dir.mkdir()
 
-    first = install_skill(
-        str(output_root),
-        "myskill",
-        target="claude",
-        scope="project",
-        target_dir=str(target_dir),
-        overwrite=True,
-        roo_mode=None,
-        cwd=str(tmp_path),
-    )
-    assert Path(first).exists()
+    first = Path(install_skill(str(output_root), "myskill"))
+    (first / "old.txt").write_text("old", encoding="utf-8")
 
-    with pytest.raises(RuntimeError, match="target directory exists"):
-        install_skill(
-            str(output_root),
-            "myskill",
-            target="claude",
-            scope="project",
-            target_dir=str(target_dir),
-            overwrite=False,
-            roo_mode=None,
-            cwd=str(tmp_path),
-        )
+    second = Path(install_skill(str(output_root), "myskill"))
+    assert second.exists()
+    assert not (second / "old.txt").exists()
 
 
-def test_install_skill_cursor_requires_project_scope_and_honors_overwrite(tmp_path: Path) -> None:
-    output_root = _make_output_root(tmp_path / "gen")
-    rules_dir = tmp_path / "cursor-rules"
-    rules_dir.mkdir()
+def test_install_skill_noop_when_source_equals_destination(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setattr("skillgen.installer.os.path.expanduser", lambda _: str(tmp_path))
+    dest = tmp_path / ".agents" / "skills" / "myskill"
+    dest.mkdir(parents=True, exist_ok=True)
+    marker = dest / "SKILL.md"
+    marker.write_text("# Existing\n", encoding="utf-8")
 
-    with pytest.raises(RuntimeError, match="cursor install requires project scope"):
-        install_skill(
-            str(output_root),
-            "myskill",
-            target="cursor",
-            scope="user",
-            target_dir=str(rules_dir),
-            overwrite=False,
-            roo_mode=None,
-            cwd=str(tmp_path),
-        )
-
-    rule_path = Path(
-        install_skill(
-            str(output_root),
-            "myskill",
-            target="cursor",
-            scope="project",
-            target_dir=str(rules_dir),
-            overwrite=False,
-            roo_mode=None,
-            cwd=str(tmp_path),
-        )
-    )
-    assert rule_path.exists()
-
-    with pytest.raises(RuntimeError, match="target file exists"):
-        install_skill(
-            str(output_root),
-            "myskill",
-            target="cursor",
-            scope="project",
-            target_dir=str(rules_dir),
-            overwrite=False,
-            roo_mode=None,
-            cwd=str(tmp_path),
-        )
-
-    rule_path2 = Path(
-        install_skill(
-            str(output_root),
-            "myskill",
-            target="cursor",
-            scope="project",
-            target_dir=str(rules_dir),
-            overwrite=True,
-            roo_mode=None,
-            cwd=str(tmp_path),
-        )
-    )
-    assert rule_path2.exists()
+    result = Path(install_skill(str(dest), "myskill"))
+    assert result == dest
+    assert marker.exists()

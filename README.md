@@ -1,7 +1,7 @@
 # SkillGen
 Turn any `llms.txt` into a ready-to-use Agent Skill.
 
-SkillGen reads the curated links in `llms.txt`, optionally snapshots the content into `references/`, and generates a clean `SKILL.md` plus indexes and provenance metadata. It can also install the skill into common tool locations (Codex, Claude Code, OpenCode, Amp, Roo, Cursor).
+SkillGen reads the curated links in `llms.txt`, optionally snapshots the content into `references/`, and generates a clean `SKILL.md` plus indexes and provenance metadata. It installs skills to `~/.agents/skills` by default (or `~/.claude/skills` with `--claude`).
 
 ## Quick start
 ```bash
@@ -17,31 +17,27 @@ skillgen https://docs.example.com/llms.txt --out ./skills
 - `references/catalog.json` and provenance files
 - `manifest.json` for auditability
 
-## LLM keyword generation
-By default SkillGen uses a local Transformers model to generate the description and keywords. If the model is not available, it falls back to deterministic heuristics (unless you pass `--no-llm-fallback`).
+## Keyword generation
+By default SkillGen uses deterministic heuristic keyword/description generation for fast, stable output.
 
-Recommended model: `Qwen/Qwen3-0.6B`.
+Heuristic levels:
+- `compact`: shortest description
+- `balanced` (default): medium detail
+- `verbose`: most detailed description with extra navigation cues
 
-```bash
-skillgen https://docs.example.com/llms.txt --llm-model Qwen/Qwen3-0.6B
-```
+Heuristic level affects the `description` narrative in `SKILL.md` only. Keyword extraction stays stable across levels.
 
 ## Common flags
-- `--include-optional` include the Optional section
+- `--name` override skill name
+- `--include-optional` include Optional section links
 - `--no-snapshot` generate link-only references
 - `--allow-external` allow external domains
-- `--by-link` one file per link (default is by section)
-- `--keyword-mode heuristic|llm|auto`
-- `--target codex|claude|opencode|amp|roo|cursor`
-- `--scope user|project` (default is user/global where supported)
+- `--heuristic-level compact|balanced|verbose`
+- `--claude` install to `~/.claude/skills` instead of default path
 
-## Install targets
-- codex: `~/.codex/skills` (user/global) or `./.codex/skills`
-- claude: `~/.claude/skills` (user/global) or `./.claude/skills`
-- opencode: `~/.config/opencode/skill` (user/global) or `./.opencode/skill` (uses `skills/` if present)
-- amp: `~/.config/agents/skills` (user/global) or `./.agents/skills`
-- roo: `~/.roo/skills` (user/global) or `./.roo/skills` (or `skills-<mode>`)
-- cursor: project only `./.cursor/rules` (creates a `.mdc` rule)
+## Install paths
+- default: `~/.agents/skills`
+- with `--claude`: `~/.claude/skills`
 
 ## Development
 ```bash
