@@ -103,4 +103,5 @@ jobs:
         with:
           tag_name: v${{ steps.version.outputs.version }}
           name: v${{ steps.version.outputs.version }}
+          target_commitish: main
           generate_release_notes: true
